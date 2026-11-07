@@ -88,3 +88,19 @@ python web_lab_flow.py --url http://127.0.0.1:3000/ --identifier demo@lab.test
 Proxy HTTP/SOCKS5 lab opsional memakai `LAB_PROXY_SERVER`, `LAB_PROXY_USERNAME`, dan `LAB_PROXY_PASSWORD`. Proxy harus dapat mengakses server privat. Aset di luar origin lab diblokir; sediakan aset self-hosted. `--headless` tidak cocok untuk verifikasi yang perlu diselesaikan manual.
 
 Catatan: `python tests.py` tetap memeriksa simulator sesi lama. Uji browser end-to-end untuk website lab Anda perlu dilakukan di mesin Anda, karena struktur DOM dan konfigurasi situs dapat berbeda.
+
+
+## Web Dashboard — Lab Console (baru)
+
+Dashboard lokal berbasis Python + Playwright tersedia pada `dashboard.py`.
+
+```bash
+git pull origin main
+source .venv/bin/activate
+python dashboard.py
+```
+
+Buka **http://127.0.0.1:8787/**. Pilih **Demo lokal** untuk pengujian tanpa koneksi ke website luar, atau **Web lab privat** dengan URL localhost/IP privat. Log, status, jeda verifikasi manual, dan screenshot tersedia dari UI. Hanya satu alur per run; website publik tidak digunakan untuk pemulihan akun otomatis.
+
+Petunjuk lengkap: **[README_DASHBOARD.md](README_DASHBOARD.md)**. Launcher untuk macOS: **[START_DASHBOARD.command](START_DASHBOARD.command)**. Pengujian tambahan: `python tests_dashboard.py`.
+
