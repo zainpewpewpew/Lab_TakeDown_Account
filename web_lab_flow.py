@@ -97,7 +97,7 @@ def wait(seconds):
     time.sleep(seconds)
 
 
-def execute(page, url, identifier, pace, log):
+def execute(page, url, identifier, pace, log, manual_allowed=True):
     from playwright.sync_api import expect, TimeoutError as PWTimeout
 
     log.add("chromium", "Browser lokal berhasil dibuka")
@@ -117,6 +117,7 @@ def execute(page, url, identifier, pace, log):
 
     textbox = must_find(
         "username/email/phone",
+        page.locator('input#_r_s_'),
         page.locator('input[type="text"]'),
         page.get_by_role("textbox"),
         page.locator('input[autocomplete="username"]'),
@@ -162,6 +163,8 @@ def execute(page, url, identifier, pace, log):
         log.add("human", "Verifikasi manusia muncul; menghentikan otomasi", "warn")
         if not page.context.browser.is_connected():
             raise RuntimeError("Browser terputus selama verifikasi")
+        if not manual_allowed:
+            raise RuntimeError("Verifikasi manual diperlukan; jalankan tanpa --headless")
         print("\nSelesaikan verifikasi secara MANUAL di browser, lalu kembali ke terminal.")
         input("Tekan ENTER setelah selesai: ")
         log.add("human", "Operator melanjutkan pengujian")
@@ -255,7 +258,7 @@ def main():
                 if authorized_scope:
                     if args.headless:
                         log.add("human", "Mode headless: challenge manual akan memerlukan eksekusi ulang", "warn")
-                    result = execute(page, url, identifier, args.delay, log)
+                    result = execute(page, url, identifier, args.delay, log, manual_allowed=not args.headless)
                 else:
                     page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     result = {"status": "INSPECT_ONLY", "channel": None}
