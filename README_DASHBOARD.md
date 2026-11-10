@@ -195,3 +195,31 @@ python tests_profile_preview.py
 ```
 
 Untuk versi library dan ketentuan penggunaan: https://github.com/instaloader/instaloader
+
+
+## Perbaikan foto profil Instagram (Profile Avatar)
+
+Jika followers/nama muncul tetapi foto profil hanya menampilkan ikon/inisial, penyebab sebelumnya adalah **Content Security Policy (CSP)** web dashboard menolak foto HTTPS eksternal dari Instagram CDN.
+
+Kini frontend menampilkan foto dari endpoint lokal **GET /api/profile-avatar?username=...** (hanya untuk username Instaloader yang sudah dimuat dan masih ada di cache). Backend mengambil file gambar HTTPS hanya dari domain CDN Instagram yang diizinkan, memvalidasi tipe dan ukuran gambar (maksimal 512 KB), menolak redirect, serta menyimpan foto sementara 5 menit. Jika endpoint lokal gagal, browser mencoba URL CDN asli sebagai fallback; kebijakan CSP sudah mengizinkan gambar HTTPS. Tidak perlu memasukkan URL foto secara manual.
+
+**Menjalankan perbaikan terbaru:**
+
+```bash
+cd ~/Desktop/Lab_TakeDown_Account
+git pull origin main
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+npm run web
+```
+
+Lalu buka http://127.0.0.1:8787/ dan tekan **Cmd+Shift+R** (hard refresh di Chrome macOS). Pilih **Web Lab Privat → Instagram publik · Instaloader (tanpa token)**, isi username `rizkyasep_sutrisna`, dan lihat foto profil di kartu kanan.
+
+Jika tetap tidak terlihat, kemungkinan Instagram CDN menolak pengambilan gambar atau URL bertanda tangan kedaluwarsa. Periksa status request **/api/profile-avatar** pada DevTools → Network. HTTP 200 `image/jpeg` berarti gambar berhasil diunduh, sedangkan 404 menunjukkan gambar tidak tersedia dari cache/CDN. Tidak ada upaya bypass pembatasan CDN.
+
+Pengujian regresi offline:
+
+```bash
+python tests_profile_avatar.py
+python tests_profile_preview.py
+```
