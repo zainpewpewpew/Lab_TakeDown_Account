@@ -61,6 +61,61 @@ class SampleTests(unittest.TestCase):
                 official_own_profile("rizky_asepsutrisna")
 
 
+class InstaloaderPreviewTests(unittest.TestCase):
+    def test_instaloader_maps_public_profile_fields(self):
+        from unittest.mock import MagicMock
+        from instaloader_source import public_profile
+        import sys
+        import types
+
+        result_profile = types.SimpleNamespace(
+            username="rizkyasep_sutrisna", full_name="Asep", biography="",
+            followers=9323, followees=1693, mediacount=None,
+            profile_pic_url="https://example.org/avatar.jpg")
+        mock_loader = MagicMock()
+        mock_lib = types.SimpleNamespace(
+            Instaloader=MagicMock(return_value=mock_loader),
+            Profile=types.SimpleNamespace(from_username=MagicMock(return_value=result_profile)),
+            exceptions=types.SimpleNamespace(ProfileNotExistsException=type("ProfileNotExistsException", (Exception,), {}),
+                                             InstaloaderException=type("InstaloaderException", (Exception,), {})))
+        with patch.dict(sys.modules, {"instaloader": mock_lib}):
+            metadata = public_profile("rizkyasep_sutrisna")
+        self.assertEqual(metadata["followers_count"], 9323)
+        self.assertEqual(metadata["following_count"], 1693)
+        self.assertIsNone(metadata["media_count"])
+        self.assertEqual(metadata["profile_picture_url"], "https://example.org/avatar.jpg")
+        self.assertEqual(mock_lib.Instaloader.call_args.kwargs["max_connection_attempts"], 1)
+
+    def test_instaloader_source_and_five_minute_cache(self):
+        metadata = {
+            "username": "rizkyasep_sutrisna", "full_name": "Asep", "biography": "",
+            "exists": True, "followers_count": 9323, "following_count": 1693,
+            "media_count": None, "profile_picture_url": "https://example.org/avatar.jpg",
+        }
+        checker = ProfilePreview(cooldown_seconds=1)
+        with patch("profile_preview.public_profile", return_value=metadata) as read:
+            first = checker.lookup({"mode": "instaloader", "username": "rizkyasep_sutrisna"})
+            again = checker.lookup({"mode": "instaloader", "username": "rizkyasep_sutrisna"})
+        self.assertEqual(read.call_count, 1)
+        self.assertEqual(first["source"], "instaloader_public")
+        self.assertEqual(again["followers_count"], 9323)
+        self.assertIsNone(first["media_count"])
+        self.assertEqual(first["profile_picture_url"], "https://example.org/avatar.jpg")
+
+    def test_instaloader_cooldown_for_different_accounts(self):
+        checker = ProfilePreview(cooldown_seconds=0)
+        with patch("profile_preview.public_profile", return_value={"username": "first.test", "exists": True}):
+            checker.lookup({"mode": "instaloader", "username": "first.test"})
+        with self.assertRaisesRegex(RuntimeError, "15 detik"):
+            checker.lookup({"mode": "instaloader", "username": "second.test"})
+
+    def test_failure_does_not_mark_account_not_found(self):
+        checker = ProfilePreview(cooldown_seconds=0)
+        with patch("profile_preview.public_profile", side_effect=ValueError("Akses Instagram terbatas")):
+            with self.assertRaisesRegex(ValueError, "terbatas"):
+                checker.lookup({"mode": "instaloader", "username": "rizkyasep_sutrisna"})
+
+
 class MockPrivateAPI(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
