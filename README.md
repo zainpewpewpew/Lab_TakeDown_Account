@@ -1,4 +1,18 @@
-# Session Security Lab — offline simulator
+# Ghoster.ai — Cyber Lab
+
+**Ghoster.ai** adalah brand untuk launcher terminal, simulator keamanan sesi, dan dashboard browser lab privat.
+
+## Jalankan Ghoster.ai (disarankan)
+
+```bash
+git clone https://github.com/zainpewpewpew/Lab_TakeDown_Account.git
+cd Lab_TakeDown_Account
+npm run setup
+```
+
+Menu `npm run setup` menggunakan banner cyber, animasi boot, warna status, dan log berurutan. Pilih **[1] INITIALIZE** saat pemakaian pertama. Gunakan `npm run test:setup` untuk menguji launcher. [Panduan Ghoster.ai](README_SETUP.md).
+
+## Tentang simulator offline
 
 A controlled lab to observe how **an already-signed-in simulated mobile session** reacts when a separate browser submits invalid logins and forgot-password requests. This is **not Instagram**. Results are hypothetical test policies, not measurements of Meta systems.
 
