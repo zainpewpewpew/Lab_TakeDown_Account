@@ -138,7 +138,7 @@ def official_own_profile(username):
     return shape(body, username, "meta_official_own_account")
 
 class ProfilePreview:
-    def __init__(self, cooldown_seconds=2):
+    def __init__(self, cooldown_seconds=1):
         self.lock = threading.Lock()
         self.cooldown_seconds = cooldown_seconds
         self.last_check = 0.0
