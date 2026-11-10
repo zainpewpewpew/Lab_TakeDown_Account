@@ -4,9 +4,12 @@
   "private": true,
   "description": "Ghoster.ai — cyber-style terminal launcher for private/local browser testing labs",
   "type": "module",
-  "engines": {"node": ">=18"},
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "setup": "node scripts/setup.mjs",
-    "test:setup": "node --test scripts/setup.test.mjs"
+    "test:setup": "node --test scripts/setup.test.mjs",
+    "web": "node scripts/web.mjs"
   }
 }
