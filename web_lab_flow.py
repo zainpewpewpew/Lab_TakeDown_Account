@@ -229,7 +229,9 @@ def main():
 
         identifier = ""
         if authorized_scope:
-            identifier = (args.identifier if args.identifier is not None else input("Username/email/nomor HP dummy: ")).strip()
+            # npm run setup passes the dummy identifier through the environment, not argv.
+            provided = args.identifier if args.identifier is not None else os.getenv("LAB_TEST_IDENTIFIER")
+            identifier = (provided if provided is not None else input("Username/email/nomor HP dummy: ")).strip()
             if not identifier or len(identifier) > 256:
                 raise ValueError("Identifier kosong atau terlalu panjang")
 
