@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import path from 'node:path';
-const entry = path.join(import.meta.dirname, 'setup.mjs');
+import {fileURLToPath} from 'node:url';
+const entry = path.join(path.dirname(fileURLToPath(import.meta.url)), 'setup.mjs');
 function run(flag) {return spawnSync(process.execPath, [entry, flag], {encoding:'utf8',timeout:15000,env:{...process.env,NO_COLOR:'1'}});}
 test('Ghoster.ai branded help', () => {const r=run('--help');assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/Ghoster\.ai/);});
 test('diagnostic command exits successfully', () => {const r=run('--check');assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/SYSTEM HEALTH/);});
