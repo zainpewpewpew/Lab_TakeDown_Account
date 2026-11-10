@@ -31,20 +31,62 @@ small.hint{display:block;color:#6f91a1;margin-top:6px;font-size:10px}.seg{displa
 .account-check-result strong{color:var(--green)}.account-action{margin-top:16px;padding:11px 19px;border-radius:8px;color:#062219;background:var(--green);font-weight:800;border:0}
 .account-action:disabled{opacity:.55;cursor:wait}
 @media(max-width:850px){.account-check-layout{grid-template-columns:1fr}}
+
+/* Ghoster.ai private profile live preview */
+.profile-preview-panel{border-color:#2c655c;box-shadow:0 0 38px #16edb414;margin-bottom:20px}
+.profile-hero{display:flex;align-items:center;gap:17px;padding:4px 0 19px}
+.profile-photo-wrap{width:88px;height:88px;border-radius:50%;padding:4px;background:linear-gradient(140deg,#50efc4,#335e8d);flex:none}
+.profile-photo{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;object-fit:cover;color:#68ffe0;font-weight:850;font-size:27px;background:#102834}
+.profile-info{min-width:0}.profile-info h3{font-size:17px;color:#edfff9;margin:2px 0 5px;overflow-wrap:anywhere}
+.profile-info .handle{color:var(--green);font-size:12px;overflow-wrap:anywhere}
+.profile-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.profile-num{background:#09222b;border:1px solid #244a4f;border-radius:10px;padding:15px 9px;text-align:center}
+.profile-num strong{display:block;font-size:22px;font-weight:850;color:#eafff8;font-variant-numeric:tabular-nums}
+.profile-num small{font-size:10px;color:#91b2ae;letter-spacing:.08em}
+.profile-description{font-size:12px;color:#c0d8d5;white-space:pre-wrap;overflow-wrap:anywhere;margin:16px 0 0}
+.profile-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;font-size:10px;color:#85a9ac}
+.profile-source-row{display:flex;gap:8px;align-items:center;margin-top:12px}
+.profile-source-row select{flex:1}
+.profile-source-row button{border:1px solid #2a635d;background:#10342f;color:#91fbd9;border-radius:8px;padding:10px 12px;font-weight:750}
+.profile-empty{font-size:12px;color:#91a8b4;padding:8px 0 15px}
+.profile-loading{opacity:.75}
+@media(max-width:580px){.profile-photo-wrap{width:71px;height:71px}.profile-num strong{font-size:18px}}
 </style></head>
 <body><div class="app"><aside class="side"><div class="brand"><div class="brand-logo">⌘</div><div>GHOSTER<span style="color:var(--green)">.</span>AI<div style="font-size:9px;font-weight:500;color:#6c94a2;letter-spacing:.12em">BROWSER AUTOMATION</div></div></div><div class="side-section">WORKSPACE</div><div class="nav"><span>◈</span> Test runner</div><a class="nav" style="display:block;text-decoration:none;background:#0d2633;border-color:#25506a;color:#b9f3e4" href="#account-checker"><span>◉</span> Account checker</a><div class="side-section">CONNECTION</div><div style="color:#8faaba;font-size:11px;padding-left:11px">● Chromium · local<br><br>● Python worker · ready<br><br>● Private target only</div><div class="sidebar-card"><strong>▣ PRIVATE SCOPE</strong><p>Dashboard ini berjalan di Mac Anda. Uji satu alur pada website lab yang Anda miliki atau gunakan simulator offline.</p></div></aside>
 <main class="main"><div class="top"><div class="top-left">GHOSTER.AI / LAB / AUTOMATION</div><div class="top-right"><span class="pulse"></span> LOCAL ENGINE ONLINE &nbsp;·&nbsp; V1.0</div></div><h1>Ghoster<span style="color:var(--green)">.ai</span> Browser Lab<span style="color:var(--green)">.</span></h1><p class="lead">Jalankan pengujian alur pemulihan pada website lab privat, pantau setiap langkah, dan tinjau hasilnya langsung dari satu dashboard.</p>
 <div class="cards"><div class="metric"><div class="metric-name">ENGINE</div><div class="metric-value ok">● READY</div></div><div class="metric"><div class="metric-name">ACTIVE RUN</div><div class="metric-value" id="metric-run">—</div></div><div class="metric"><div class="metric-name">LAST RESULT</div><div class="metric-value" id="metric-result">—</div></div></div>
 <div class="layout"><section class="panel"><header class="panel-head"><h2>01 / Konfigurasi Pengujian</h2><span class="eyebrow">SETUP</span></header><div class="content">
 <div class="eyebrow">PILIH LINGKUNGAN</div><div class="seg" style="margin-top:10px"><input type="radio" name="mode" value="demo" id="demo" checked><label for="demo">◉ Demo lokal</label><input type="radio" name="mode" value="private" id="private"><label for="private">⌘ Web lab privat</label></div>
-<div id="private-fields" class="hide"><label class="field" for="url">URL website lab</label><input type="url" id="url" placeholder="http://127.0.0.1:3000/"><small class="hint">Hanya localhost / IP privat / domain lab internal</small></div>
+<div id="private-fields" class="hide">
+<label class="field" for="url">URL website lab</label><input type="url" id="url" placeholder="http://127.0.0.1:3000/"><small class="hint">Hanya localhost / IP privat / domain lab internal</small>
+<label class="field" for="profile-username">Username akun Instagram / lab</label>
+<input type="text" id="profile-username" maxlength="30" placeholder="Contoh: rizky_asepsutrisna" autocomplete="off" spellcheck="false">
+<div class="profile-source-row"><select id="profile-source" aria-label="Sumber metadata profil"><option value="private">API web lab privat</option><option value="instagram_own">Instagram resmi · akun terhubung</option><option value="demo">Demo tanpa koneksi Instagram</option></select><button type="button" id="profile-refresh">↻ PREVIEW</button></div>
+<small class="hint">Preview otomatis setelah berhenti mengetik. API Instagram resmi hanya membaca akun Business/Creator milik token yang terhubung. Demo tidak menampilkan statistik akun asli.</small>
+</div>
 <label class="field" for="identifier">Username / email / nomor HP dummy</label><input type="text" id="identifier" value="demo@lab.test" autocomplete="off" maxlength="128"><small class="hint">Gunakan identitas simulasi, bukan akun pengguna nyata.</small>
 <div id="demo-fields"><label class="field" for="demo-options">Opsi pemulihan yang tersedia</label><select id="demo-options"><option value="both">Email + SMS (prioritas email)</option><option value="email">Email saja</option><option value="sms">SMS saja</option><option value="none">Tidak ada opsi</option></select><label class="checkbox"><input type="checkbox" id="challenge">Munculkan verifikasi manusia (demo)</label></div>
 <div class="rowline"><label for="delay">Jeda per langkah</label><span style="color:var(--green)" id="delay-readout">0.7 s</span></div><input type="range" id="delay" min="0.2" max="3" step="0.1" value="0.7" class="range">
 <label class="checkbox"><input type="checkbox" id="headless">Chromium tanpa jendela (headless)</label>
 <div class="button-row"><button class="btn primary" id="start">▶ MULAI TEST</button><button class="btn danger" id="stop" disabled>■ STOP</button></div><div class="notice">↳ Satu run = satu alur; tanpa loop otomatis. Website publik tidak dapat digunakan untuk mengirim pemulihan akun.</div>
 </div></section>
-<div class="activity"><section class="panel"><header class="panel-head"><h2>02 / Runtime Monitor</h2><span class="eyebrow">LIVE</span></header><div class="statusbar"><div class="statusicon">◈</div><div><strong id="status-title">Ready to initialize</strong><p id="status-desc">Pilih mode, lalu tekan Mulai Test</p></div><span class="state" id="status-badge">IDLE</span></div><div class="steps"><div class="step" id="step1"><b>01</b>LAUNCH</div><div class="step" id="step2"><b>02</b>NAVIGATE</div><div class="step" id="step3"><b>03</b>FLOW</div><div class="step" id="step4"><b>04</b>RESULT</div></div><div class="loghead"><span><span class="logdot">●</span> EVENT STREAM</span><span id="count">0 EVENTS</span></div><div class="logpane" id="logs"><div class="empty">&gt; Awaiting first test execution_<br><span style="font-size:10px">Logs akan muncul di sini.</span></div></div><div class="manual" id="manual"><b>⚠ HUMAN VERIFICATION REQUIRED</b>Selesaikan pemeriksaan manusia secara manual pada jendela Chromium yang terbuka. Setelah selesai, lanjutkan dari dashboard.<br><button class="btn secondary" id="resume">✓ VERIFIKASI SELESAI — LANJUT</button></div></section>
+<div class="activity">
+<section id="profile-preview" class="panel profile-preview-panel hide" aria-live="polite">
+<header class="panel-head"><h2>◎ Account Profile Preview</h2><span class="eyebrow">READ ONLY · LIVE DATA</span></header>
+<div class="content">
+<div class="profile-hero">
+<div class="profile-photo-wrap"><div id="profile-initials" class="profile-photo" aria-label="Avatar placeholder">◎</div><img class="profile-photo hide" id="profile-photo" alt="Foto profil akun" referrerpolicy="no-referrer"></div>
+<div class="profile-info"><div class="eyebrow" id="profile-state">WAITING FOR USERNAME</div><h3 id="profile-fullname">Belum ada profil</h3><div id="profile-handle" class="handle">@—</div></div>
+</div>
+<div class="profile-nums">
+<div class="profile-num"><strong id="profile-posts">—</strong><small>POSTS</small></div>
+<div class="profile-num"><strong id="profile-followers">—</strong><small>FOLLOWERS</small></div>
+<div class="profile-num"><strong id="profile-following">—</strong><small>FOLLOWING</small></div>
+</div>
+<p id="profile-bio" class="profile-description">Masukkan username untuk melihat metadata akun dari sumber yang diotorisasi.</p>
+<div class="profile-meta"><span id="profile-origin">Sumber: belum dipilih</span><span id="profile-time">Belum diperiksa</span></div>
+</div></section>
+<section class="panel"><header class="panel-head"><h2>02 / Runtime Monitor</h2><span class="eyebrow">LIVE</span></header><div class="statusbar"><div class="statusicon">◈</div><div><strong id="status-title">Ready to initialize</strong><p id="status-desc">Pilih mode, lalu tekan Mulai Test</p></div><span class="state" id="status-badge">IDLE</span></div><div class="steps"><div class="step" id="step1"><b>01</b>LAUNCH</div><div class="step" id="step2"><b>02</b>NAVIGATE</div><div class="step" id="step3"><b>03</b>FLOW</div><div class="step" id="step4"><b>04</b>RESULT</div></div><div class="loghead"><span><span class="logdot">●</span> EVENT STREAM</span><span id="count">0 EVENTS</span></div><div class="logpane" id="logs"><div class="empty">&gt; Awaiting first test execution_<br><span style="font-size:10px">Logs akan muncul di sini.</span></div></div><div class="manual" id="manual"><b>⚠ HUMAN VERIFICATION REQUIRED</b>Selesaikan pemeriksaan manusia secara manual pada jendela Chromium yang terbuka. Setelah selesai, lanjutkan dari dashboard.<br><button class="btn secondary" id="resume">✓ VERIFIKASI SELESAI — LANJUT</button></div></section>
 <section class="panel"><header class="panel-head"><h2>03 / Evidence &amp; Screenshot</h2><span class="eyebrow">RESULTS</span></header><div class="content"><div class="result" id="result"><span style="font-size:26px;color:#5c8a95">▧</span>Belum ada hasil pengujian.<br>Screenshot akan muncul setelah run selesai.</div></div></section></div></div>
 
 <section class="panel" id="account-checker" style="margin-top:23px">
@@ -108,6 +150,89 @@ $('ac-check').addEventListener('click',async()=>{
   }finally{button.disabled=false}
 });
 accountModeUpdate();
+
+
+// Account preview: readonly metadata, with debounced input and no credential collection.
+const profileUI={timer:null,generation:0,busy:false};
+function profileNumber(n){return Number.isInteger(n)&&n>=0?new Intl.NumberFormat('id-ID').format(n):'—'}
+function profileReset(message='Masukkan username untuk melihat metadata profil.'){
+  $('profile-state').textContent='WAITING FOR DATA';
+  $('profile-fullname').textContent='Belum ada profil';
+  $('profile-handle').textContent='@—';
+  $('profile-posts').textContent='—';$('profile-followers').textContent='—';$('profile-following').textContent='—';
+  $('profile-bio').textContent=message;$('profile-origin').textContent='Sumber: belum tersedia';
+  $('profile-time').textContent='Belum diperiksa';
+  $('profile-photo').classList.add('hide');$('profile-photo').removeAttribute('src');
+  $('profile-initials').classList.remove('hide');$('profile-initials').textContent='◎';
+}
+function profileImage(url){
+  const photo=$('profile-photo'), fallback=$('profile-initials');
+  photo.classList.add('hide');photo.removeAttribute('src');fallback.classList.remove('hide');
+  if(!url)return;
+  try{
+    const parsed=new URL(url);
+    if(parsed.protocol!=='https:')return;
+    photo.onload=()=>{photo.classList.remove('hide');fallback.classList.add('hide')};
+    photo.onerror=()=>{photo.classList.add('hide');fallback.classList.remove('hide')};
+    photo.src=url;
+  }catch{}
+}
+async function profileLoad(){
+  if(!$('private').checked)return;
+  const username=$('profile-username').value.trim().replace(/^@/,'');
+  if(!/^[A-Za-z0-9._]{1,30}$/.test(username)){
+    profileReset('Masukkan username yang valid (tanpa @, maksimal 30 karakter).');
+    return;
+  }
+  const mode=$('profile-source').value;
+  const url=$('url').value.trim();
+  if(mode==='private'&&!url){profileReset('Isi URL origin web lab privat untuk menampilkan data dari API admin Anda.');return;}
+  const generation=++profileUI.generation;
+  $('profile-state').textContent='SYNCING METADATA...';
+  $('profile-handle').textContent='@'+username;
+  $('profile-refresh').disabled=true;
+  try{
+    const data=await api('POST','/api/profile-preview',{mode,username,url});
+    if(generation!==profileUI.generation)return;
+    $('profile-state').textContent=data.exists?'PROFILE LOADED':'PROFILE NOT FOUND';
+    $('profile-fullname').textContent=data.full_name||(data.exists?'Nama tidak tersedia':'Akun tidak ditemukan');
+    $('profile-handle').textContent='@'+data.username;
+    $('profile-posts').textContent=profileNumber(data.media_count);
+    $('profile-followers').textContent=profileNumber(data.followers_count);
+    $('profile-following').textContent=profileNumber(data.following_count);
+    $('profile-bio').textContent=data.biography||'Bio tidak tersedia dari sumber ini.';
+    $('profile-origin').textContent='Sumber: '+data.source;
+    $('profile-time').textContent=(data.checked_at||'').replace('T',' ').slice(0,19)+' UTC';
+    $('profile-initials').textContent=(data.username[0]||'?').toUpperCase();
+    profileImage(data.profile_picture_url);
+  }catch(err){
+    if(generation!==profileUI.generation)return;
+    profileReset('Preview tidak tersedia: '+err.message);
+    $('profile-handle').textContent='@'+username;
+    $('profile-state').textContent='UNAVAILABLE';
+  }finally{
+    if(generation===profileUI.generation)$('profile-refresh').disabled=false;
+  }
+}
+function scheduleProfile(){
+  if(profileUI.timer)clearTimeout(profileUI.timer);
+  profileUI.generation++;
+  profileUI.timer=setTimeout(profileLoad,950);
+}
+$('profile-username').addEventListener('input',scheduleProfile);
+$('profile-source').addEventListener('change',scheduleProfile);
+$('url').addEventListener('change',scheduleProfile);
+$('profile-refresh').addEventListener('click',()=>{
+  if(profileUI.timer)clearTimeout(profileUI.timer);
+  profileLoad();
+});
+function profileVisibility(){
+  const show=$('private').checked;
+  $('profile-preview').classList.toggle('hide',!show);
+  if(show)scheduleProfile();
+}
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',profileVisibility));
+profileVisibility();
 
 modeUpdate();refresh();setInterval(refresh,1000);
 </script></body></html>
