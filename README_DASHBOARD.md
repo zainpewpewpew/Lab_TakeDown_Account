@@ -69,3 +69,41 @@ Untuk menjalankan tanpa otomatis membuka dashboard: `python dashboard.py --no-op
 - `tests_dashboard.py`: pengujian validasi URL, penolakan akses, UI, dan demo.
 
 Perbandingan open source: [Playwright](https://playwright.dev/python/docs/intro), [Playwright Trace Viewer](https://playwright.dev/python/docs/trace-viewer-intro), [Browserless](https://docs.browserless.io/enterprise/open-source), [Selenium Grid](https://www.selenium.dev/documentation/guides/docker_and_grid/), [AgentBrowser](https://github.com/smouj/agent-browser).
+
+## Account Checker — pemeriksaan akun pada web lab pribadi
+
+Panel **04 / Account Checker** kini tersedia pada halaman utama dashboard. Fitur ini *read-only* dan memeriksa **satu akun dummy per klik**. Tidak menguji password, mengirim email/SMS reset, atau memeriksa keberadaan username di Instagram sungguhan.
+
+**Mode Demo lokal:** isi `demo_account` (active), `needs.verify` (verification_required), `disabled.demo` (disabled), atau nama lain (not found). Tidak membutuhkan Chromium atau koneksi jaringan.
+
+**Mode API web lab privat:** pemilik website perlu menyediakan endpoint admin `GET /api/lab/account-status?username=<username>` yang memerlukan `Authorization: Bearer <token>`. Jalankan dashboard setelah menyetel environment token pada komputer lokal:
+
+```bash
+# Jangan commit token ke repo. Jalankan di terminal lokal.
+read -s "LAB_ACCOUNT_CHECK_TOKEN?Token API admin lab: "
+export LAB_ACCOUNT_CHECK_TOKEN
+python dashboard.py
+```
+
+*Contoh respons API milik web lab Anda*:
+
+```json
+{
+  "username": "demo_account",
+  "exists": true,
+  "account_status": "active",
+  "session_status": "active"
+}
+```
+
+Nilai yang diterima untuk `account_status`: `active`, `disabled`, `verification_required`, `unknown`.
+Nilai untuk `session_status`: `active`, `expired`, `revoked`, `unknown`.
+Jika akun tidak ditemukan, isi `exists: false` dan kedua status `unknown`. Username harus sama persis dengan yang diminta (huruf kecil).
+
+Masukkan hanya **origin localhost atau alamat IP privat** (misalnya `http://127.0.0.1:3000/` atau `https://192.168.1.20/`), bukan nama domain publik. Redirect, proxy, dan respons non-JSON ditolak. Token hanya berada di backend Python; tidak dikirim ke browser dashboard. Jika situs Anda belum memiliki endpoint tersebut, mode privat belum dapat mengecek status akun sampai backend situs lab menambahkannya. **Account Checker tidak dapat menentukan status akun Instagram asli.**
+
+Uji fungsinya:
+
+```bash
+python tests_account_checker.py
+```
