@@ -15,6 +15,7 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 
 from account_checker import _scope_check, clean_username
 from instaloader_source import public_profile
+from avatar_delivery import fetch_instagram_avatar
 
 GRAPH_HOST = "https://graph.instagram.com"
 GRAPH_VERSION = "v26.0"
@@ -167,6 +168,7 @@ class ProfilePreview:
         self.last_check = 0.0
         self.instaloader_last_attempt = 0.0
         self.instaloader_cache = {}
+        self.avatar_cache = {}
 
     def lookup(self, payload):
         if not isinstance(payload, dict):
@@ -209,3 +211,27 @@ class ProfilePreview:
                 raise ValueError("Masukkan URL web lab privat")
             return private_profile(origin.strip(), username)
         return official_own_profile(username)
+
+    def avatar(self, username):
+        """Serve avatar bytes only for a previously viewed, fresh Instaloader profile."""
+        username = clean_username(username)
+        tick = time.monotonic()
+        with self.lock:
+            cached_profile = self.instaloader_cache.get(username)
+            if not cached_profile or tick >= cached_profile[0]:
+                return None
+            url = cached_profile[1].get("profile_picture_url")
+            if not url:
+                return None
+            cached_image = self.avatar_cache.get(url)
+            if cached_image and tick < cached_image[0]:
+                return cached_image[1], cached_image[2]
+        body, mime = fetch_instagram_avatar(url)
+        with self.lock:
+            self.avatar_cache[url] = (time.monotonic() + 300, body, mime)
+            if len(self.avatar_cache) > 48:
+                self.avatar_cache = {
+                    key: item for key, item in self.avatar_cache.items()
+                    if item[0] > time.monotonic()
+                }
+        return body, mime
