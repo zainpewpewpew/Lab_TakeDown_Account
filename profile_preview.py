@@ -105,9 +105,31 @@ def read_json(url, token):
             if len(raw) > 16384:
                 raise ValueError("Respons API profil terlalu besar")
     except HTTPError as exc:
-        if exc.code in (401, 403):
-            raise ValueError("Token API ditolak; periksa izin akun") from None
-        raise ValueError("API gagal (HTTP " + str(exc.code) + ")") from None
+        # Meta API frequently returns machine-readable error codes. Never echo
+        # the raw response or token, since error text can contain sensitive data.
+        error_code, subcode = None, None
+        try:
+            payload = json.loads(exc.read(4096))
+            issue = payload.get("error", {}) if isinstance(payload, dict) else {}
+            if isinstance(issue, dict):
+                error_code = issue.get("code") if type(issue.get("code")) is int else None
+                subcode = issue.get("error_subcode") if type(issue.get("error_subcode")) is int else None
+        except (ValueError, UnicodeDecodeError, OSError):
+            pass
+        detail = "HTTP " + str(exc.code)
+        if error_code is not None:
+            detail += " · Meta code " + str(error_code)
+        if subcode is not None:
+            detail += " · subcode " + str(subcode)
+        if error_code == 190:
+            hint = "Access token Instagram tidak valid, kedaluwarsa, atau dicabut; buat ulang token melalui Instagram Login"
+        elif error_code in (10, 200):
+            hint = "Aplikasi atau token tidak mempunyai izin untuk data profil akun ini"
+        elif exc.code in (401, 403):
+            hint = "Token ditolak; pastikan sumber API sesuai dengan jenis token dan akun diotorisasi"
+        else:
+            hint = "API profil menolak request; periksa tipe token, versi API, dan izin akun"
+        raise ValueError("Meta/API: " + detail + " — " + hint) from None
     except (OSError, URLError, TimeoutError) as exc:
         raise ValueError("Koneksi API gagal: " + type(exc).__name__) from None
     try:
