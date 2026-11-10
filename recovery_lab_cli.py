@@ -51,13 +51,21 @@ class Terminal:
         print(f"{color}[{clock[11:19]} UTC] [{stage:>12}] {message}{reset}", flush=True)
 
     def banner(self, variant):
-        print("""
+        art = """
 ╔════════════════════════════════════════════════════════════════════╗
 ║                 G H O S T E R  .  A I                              ║
 ║                 C Y B E R  /  R E C O V E R Y                      ║
 ║                                                                    ║
 ║      ONE-SHOT  ◆  PRIVATE LAB ONLY  ◆  HUMAN-IN-THE-LOOP          ║
-╚════════════════════════════════════════════════════════════════════╝""", flush=True)
+╚════════════════════════════════════════════════════════════════════╝"""
+        print((COLORS["cyan"] + art + RESET) if self.tty else art, flush=True)
+        if self.tty and os.getenv("REDUCED_MOTION") != "1":
+            for count in range(0, 21, 4):
+                bar = "█" * count + "░" * (20 - count)
+                sys.stdout.write("\r" + COLORS["pink"] + "  BOOT SEQUENCE  " + bar + RESET)
+                sys.stdout.flush()
+                time.sleep(0.045)
+            sys.stdout.write("\n")
         self.line("BOOT", "Browser mode: " + variant.upper(), "green")
 
 
@@ -155,8 +163,8 @@ def run_flow(page, url, identifier, terminal, pacer, manual=True):
     pacer.between(terminal, "mengisi identifier")
     field = required(
         "input username/email/nomor HP",
-        page.get_by_role("textbox"),
         page.locator('input[id="_r_s_"]'),
+        page.get_by_role("textbox"),
         page.locator('input[type="text"]'),
         page.locator('input[autocomplete="username"]'),
     )
