@@ -59,12 +59,10 @@ small.hint{display:block;color:#6f91a1;margin-top:6px;font-size:10px}.seg{displa
 <div class="eyebrow">PILIH LINGKUNGAN</div><div class="seg" style="margin-top:10px"><input type="radio" name="mode" value="demo" id="demo" checked><label for="demo">◉ Demo lokal</label><input type="radio" name="mode" value="private" id="private"><label for="private">⌘ Web lab privat</label></div>
 <div id="private-fields" class="hide">
 <label class="field" for="url">URL website lab</label><input type="url" id="url" placeholder="http://127.0.0.1:3000/"><small class="hint">Hanya localhost / IP privat / domain lab internal</small>
-<label class="field" for="profile-username">Username akun Instagram / lab</label>
-<input type="text" id="profile-username" maxlength="30" placeholder="Contoh: rizky_asepsutrisna" autocomplete="off" spellcheck="false">
 <div class="profile-source-row"><select id="profile-source" aria-label="Sumber metadata profil"><option value="private">API web lab privat</option><option value="instagram_own">Instagram resmi · akun terhubung</option><option value="demo">Demo tanpa koneksi Instagram</option></select><button type="button" id="profile-refresh">↻ PREVIEW</button></div>
 <small class="hint">Preview otomatis setelah berhenti mengetik. API Instagram resmi hanya membaca akun Business/Creator milik token yang terhubung. Demo tidak menampilkan statistik akun asli.</small>
 </div>
-<label class="field" for="identifier">Username / email / nomor HP dummy</label><input type="text" id="identifier" value="demo@lab.test" autocomplete="off" maxlength="128"><small class="hint">Gunakan identitas simulasi, bukan akun pengguna nyata.</small>
+<label class="field" for="identifier">Username Instagram / email / nomor HP untuk lab</label><input type="text" id="identifier" value="demo@lab.test" autocomplete="off" maxlength="128"><small class="hint">Untuk preview, isi username tanpa @. Untuk Recovery Flow, gunakan identitas lab yang Anda kendalikan.</small>
 <div id="demo-fields"><label class="field" for="demo-options">Opsi pemulihan yang tersedia</label><select id="demo-options"><option value="both">Email + SMS (prioritas email)</option><option value="email">Email saja</option><option value="sms">SMS saja</option><option value="none">Tidak ada opsi</option></select><label class="checkbox"><input type="checkbox" id="challenge">Munculkan verifikasi manusia (demo)</label></div>
 <div class="rowline"><label for="delay">Jeda per langkah</label><span style="color:var(--green)" id="delay-readout">0.7 s</span></div><input type="range" id="delay" min="0.2" max="3" step="0.1" value="0.7" class="range">
 <label class="checkbox"><input type="checkbox" id="headless">Chromium tanpa jendela (headless)</label>
@@ -110,7 +108,10 @@ const state={lastId:null,lastScreenshot:null};
 const busy=s=>['starting','running','awaiting_manual','stopping'].includes(s);
 const messages={idle:['Ready to initialize','Pilih mode, lalu tekan Mulai Test'],starting:['Initializing engine','Menyiapkan browser dan website lab'],running:['Test in progress','Merekam event dari Chromium secara langsung'],awaiting_manual:['Verification pause','Menunggu penyelesaian pemeriksaan manusia'],completed:['Test complete','Laporan lokal dan screenshot tersedia'],failed:['Test failed','Periksa log untuk mengetahui penyebabnya'],stopping:['Stopping process','Menghentikan proses Chromium'],cancelled:['Run cancelled','Proses dihentikan oleh operator']};
 async function api(method,path,obj){const cfg={method,headers:{'Accept':'application/json','X-Lab-Token':TOKEN}};if(obj!==undefined){cfg.headers['Content-Type']='application/json';cfg.body=JSON.stringify(obj)}const res=await fetch(path,cfg);let out=await res.json();if(!res.ok)throw new Error(out.error||'HTTP '+res.status);return out}
-function modeUpdate(){const isPrivate=$('private').checked;$('private-fields').classList.toggle('hide',!isPrivate);$('demo-fields').classList.toggle('hide',isPrivate);if(!isPrivate&&$('challenge').checked)$('headless').checked=false}
+function modeUpdate(){const isPrivate=$('private').checked;$('private-fields').classList.toggle('hide',!isPrivate);$('demo-fields').classList.toggle('hide',isPrivate);if(!isPrivate&&$('challenge').checked)$('headless').checked=false;
+if(isPrivate&&$('identifier').value==='demo@lab.test')$('identifier').value='';
+if(!isPrivate&&!$('identifier').value)$('identifier').value='demo@lab.test';
+$('identifier').placeholder=isPrivate?'Contoh: rizky_asepsutrisna':'demo@lab.test';}
 document.querySelectorAll('input[name=mode]').forEach(x=>x.addEventListener('change',modeUpdate));$('delay').addEventListener('input',()=>{$('delay-readout').textContent=Number($('delay').value).toFixed(1)+' s'});$('challenge').addEventListener('change',()=>{if($('challenge').checked)$('headless').checked=false});$('headless').addEventListener('change',()=>{if($('headless').checked)$('challenge').checked=false});
 $('start').addEventListener('click',async()=>{const payload={mode:$('private').checked?'private':'demo',url:$('url').value.trim(),identifier:$('identifier').value.trim(),delay:Number($('delay').value),headless:$('headless').checked,demo_options:$('demo-options').value,demo_challenge:$('challenge').checked};try{await api('POST','/api/start',payload);await refresh()}catch(e){window.alert(e.message)}});
 $('stop').addEventListener('click',async()=>{try{await api('POST','/api/stop',{});await refresh()}catch(e){window.alert(e.message)}});
@@ -179,9 +180,9 @@ function profileImage(url){
 }
 async function profileLoad(){
   if(!$('private').checked)return;
-  const username=$('profile-username').value.trim().replace(/^@/,'');
+  const username=$('identifier').value.trim().replace(/^@/,'');
   if(!/^[A-Za-z0-9._]{1,30}$/.test(username)){
-    profileReset('Masukkan username yang valid (tanpa @, maksimal 30 karakter).');
+    profileReset('Masukkan username akun Instagram/lab tanpa @ untuk menampilkan preview (bukan email/nomor HP).');
     return;
   }
   const mode=$('profile-source').value;
@@ -217,9 +218,9 @@ async function profileLoad(){
 function scheduleProfile(){
   if(profileUI.timer)clearTimeout(profileUI.timer);
   profileUI.generation++;
-  profileUI.timer=setTimeout(profileLoad,950);
+  profileUI.timer=setTimeout(profileLoad,1250);
 }
-$('profile-username').addEventListener('input',scheduleProfile);
+$('identifier').addEventListener('input',scheduleProfile);
 $('profile-source').addEventListener('change',scheduleProfile);
 $('url').addEventListener('change',scheduleProfile);
 $('profile-refresh').addEventListener('click',()=>{
