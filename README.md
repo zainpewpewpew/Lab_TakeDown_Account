@@ -12,6 +12,19 @@ npm run setup
 
 Menu `npm run setup` menggunakan banner cyber, animasi boot, warna status, dan log berurutan. Pilih **[1] INITIALIZE** saat pemakaian pertama. Gunakan `npm run test:setup` untuk menguji launcher. [Panduan Ghoster.ai](README_SETUP.md).
 
+
+## Recovery Flow UI — dua varian (private lab only)
+
+Ghoster.ai kini memiliki runner CLI baru untuk pengujian alur Forgot Password pada website lab privat milik sendiri. Ada **dua pilihan**:
+
+~~~bash
+npm run recovery:lab                  # Chromium biasa
+npm run recovery:multilogin:lab       # Chromium pada profil Multilogin CDP lokal yang sudah berjalan
+npm run recovery:lab -- --demo --identifier demo@lab.test  # Demo offline
+~~~
+
+Fitur: jeda acak 1–3 detik, log langkah berurutan, prefer email lalu fallback SMS, jeda verifikasi manusia hingga ENTER, screenshot, JSON report. Tidak mengotomatisasi reset pada Instagram atau website publik. Panduan lengkap: [README_RECOVERY_LAB.md](README_RECOVERY_LAB.md).
+
 ## Tentang simulator offline
 
 A controlled lab to observe how **an already-signed-in simulated mobile session** reacts when a separate browser submits invalid logins and forgot-password requests. This is **not Instagram**. Results are hypothetical test policies, not measurements of Meta systems.
