@@ -1,6 +1,6 @@
-"""Ghoster.ai read-only profile previews from mock data, private lab API or official Meta.
+"""Ghoster.ai read-only profile previews from demo, private lab, official Meta, or public Instaloader metadata.
 
-Never scrapes Instagram, guesses passwords, changes accounts, or sends reset requests.
+Does not use Instagram account passwords, cookies, reset actions or automated login.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from account_checker import _scope_check, clean_username
+from instaloader_source import public_profile
 
 GRAPH_HOST = "https://graph.instagram.com"
 GRAPH_VERSION = "v26.0"
@@ -164,14 +165,35 @@ class ProfilePreview:
         self.lock = threading.Lock()
         self.cooldown_seconds = cooldown_seconds
         self.last_check = 0.0
+        self.instaloader_last_attempt = 0.0
+        self.instaloader_cache = {}
 
     def lookup(self, payload):
         if not isinstance(payload, dict):
             raise ValueError("Permintaan profil harus objek JSON")
         mode = payload.get("mode", "demo")
-        if mode not in ("demo", "private", "instagram_own"):
-            raise ValueError("Pilih demo, private, atau instagram_own")
+        if mode not in ("demo", "private", "instagram_own", "instaloader"):
+            raise ValueError("Pilih demo, private, instagram_own, atau instaloader")
         username = clean_username(payload.get("username", ""))
+        if mode == "instaloader":
+            clock = time.monotonic()
+            with self.lock:
+                cached = self.instaloader_cache.get(username)
+                if cached and clock < cached[0]:
+                    return dict(cached[1])
+                if clock - self.instaloader_last_attempt < 15:
+                    raise RuntimeError("Pembatasan request Instagram: tunggu 15 detik sebelum memeriksa username berbeda")
+                self.instaloader_last_attempt = clock
+            result = shape(public_profile(username), username, "instaloader_public")
+            with self.lock:
+                # Freshness 5 minutes: repeated input does not repeatedly query Instagram.
+                self.instaloader_cache[username] = (time.monotonic() + 300, result)
+                if len(self.instaloader_cache) > 100:
+                    self.instaloader_cache = {
+                        key: value for key, value in self.instaloader_cache.items()
+                        if value[0] > time.monotonic()
+                    }
+            return result
         with self.lock:
             if time.monotonic() - self.last_check < self.cooldown_seconds:
                 raise RuntimeError("Tunggu sebentar sebelum memperbarui preview")
