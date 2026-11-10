@@ -166,3 +166,32 @@ npm run web
 ```
 
 Referensi: Meta Instagram API [Postman](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api), [Instaloader](https://instaloader.github.io/module/structures.html). Instaloader adalah library tidak resmi dan tidak digunakan pada fitur ini; akses anonim terhadap profil bisa dibatasi Instagram.
+
+
+## Preview Instagram publik tanpa token Meta — Instaloader
+
+Sumber profil di Ghoster.ai sekarang memiliki pilihan default **Instagram publik · Instaloader (tanpa token)**. Ini adalah library open-source, bukan API resmi Meta. Fitur hanya membaca **satu profil publik per input** dan tidak menjalankan login, Forgot Password, atau automasi interaksi.
+
+Setup setelah memperbarui repo:
+
+```bash
+cd ~/Desktop/Lab_TakeDown_Account
+git pull origin main
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+npm run web
+```
+
+Di halaman `http://127.0.0.1:8787/`, pilih **Web lab privat** lalu pada bagian sumber preview pilih **Instagram publik · Instaloader (tanpa token)**. Isi username `rizkyasep_sutrisna` (tanpa @) pada kolom identifier. URL lab **tidak diperlukan** untuk sumber Instaloader; URL lab masih digunakan apabila Anda mengeksekusi Recovery Flow pada website privat.
+
+UI menampilkan nama, bio, foto profil HTTPS (jika tersedia), jumlah followers, following, dan postingan. Instaloader bisa mengembalikan `None` pada jumlah postingan; UI menampilkan `—` (bukan nol). Metadata disimpan dalam cache selama **5 menit**, dan lookup username berbeda memiliki jeda minimal **15 detik**. Input pada UI memakai debounce sekitar 1,25 detik.
+
+Saat Instagram menolak metadata, preview menampilkan status tidak tersedia. Pesan Instaloader `does not exist` sendiri bukan bukti akun benar-benar tidak ada. Angka follower dapat berubah sejak query terakhir. Link foto CDN Instagram juga dapat kedaluwarsa.
+
+Tes unit tanpa koneksi Instagram:
+
+```bash
+python tests_profile_preview.py
+```
+
+Untuk versi library dan ketentuan penggunaan: https://github.com/instaloader/instaloader
