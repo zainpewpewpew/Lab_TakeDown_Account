@@ -24,6 +24,7 @@ from urllib.parse import urlsplit
 
 from mock_recovery_lab import start_mock_server
 from account_checker import AccountChecker
+from profile_preview import ProfilePreview
 
 ROOT = Path(__file__).resolve().parent
 INDEX = ROOT / "dashboard_static" / "index.html"
@@ -244,6 +245,7 @@ class DashboardHTTP(ThreadingHTTPServer):
         super().__init__(addr, self.Handler)
         self.engine = engine
         self.account_checker = AccountChecker()
+        self.profile_preview = ProfilePreview()
         self.token = secrets.token_urlsafe(24)
 
     class Handler(BaseHTTPRequestHandler):
@@ -318,6 +320,8 @@ class DashboardHTTP(ThreadingHTTPServer):
                     result = self.server.engine.stop()
                 elif path == "/api/account-check":
                     result = self.server.account_checker.check(body)
+                elif path == "/api/profile-preview":
+                    result = self.server.profile_preview.lookup(body)
                 else:
                     return self.send_body(404, {"error": "not_found"})
                 return self.send_body(200, result)
