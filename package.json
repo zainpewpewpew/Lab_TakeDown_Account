@@ -10,6 +10,8 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "test:setup": "node --test scripts/setup.test.mjs",
-    "web": "node scripts/web.mjs"
+    "web": "node scripts/web.mjs",
+    "recovery:lab": "node scripts/recovery-lab.mjs",
+    "recovery:multilogin:lab": "node scripts/recovery-lab.mjs --multilogin"
   }
 }
