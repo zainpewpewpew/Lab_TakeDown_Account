@@ -1,39 +1,46 @@
-# Ghoster.ai — Cyber Lab Terminal
+# Ghoster.ai — npm run setup
 
-Ghoster.ai adalah launcher Node.js untuk fitur lab yang sudah ada di repository ini. Mulai dari satu menu interaktif dengan `npm run setup`, tanpa tambahan dependensi npm.
-
-## Prasyarat
-
-Node.js 18+ dan Python 3.10+. Pada macOS, jalankan Terminal di root repository.
+Ghoster.ai sekarang memakai **Terminal CLI saja** sebagai layar utama, bukan dashboard website.
+Jalankan dari folder repository:
 
 ```bash
 git pull origin main
 npm run setup
 ```
 
-Pilih **[1] INITIALIZE** pada pemakaian pertama agar Python virtual environment, paket pip, dan Playwright Chromium disiapkan.
-
 ## Menu
 
-- **1 · INITIALIZE**: siapkan Python virtual environment dan Chromium
-- **2 · SESSION LAB**: pengujian keamanan sesi pada simulator offline
-- **3 · PRIVATE FLOW**: satu alur UI di website lab privat, dengan URL dan identifier dummy diminta di Terminal
-- **4 · WEB DASHBOARD**: buka dashboard lama pada localhost
-- **5 · DIAGNOSTICS**: cek lingkungan dan jalankan tes Python
-- **0 · SHUTDOWN**: keluar
+```text
+╭──[ GHOSTER.AI // MAIN CONTROL ]────────────────────
+ [1] URL TARGET     Buka URL web lab pribadi
+ [2] CONFIG         Headless OFF / Proxy OFF
+ [0] EXIT           Tutup Ghoster.ai
+╰────────────────────────────────────────────────────
+```
 
-## Desain terminal
+1. **URL TARGET** — masukkan domain atau URL (misalnya `labprivate.com`, `localhost:3000`, atau `192.168.1.10:8080`). Input tanpa skema diubah otomatis menjadi `https://` untuk domain biasa atau `http://` untuk localhost/IP privat. Setelah itu masukkan identifier **dummy** berupa username/email/nomor. Jika Proxy ON, program meminta URL proxy sebelum menjalankan Chromium.
+2. **CONFIG** — submenu `1 HEADLESS ON/OFF`, `2 PROXY ON/OFF`, `0 BACK`. Default keduanya OFF. Pengaturan berlaku selama sesi menu berjalan.
+0. **EXIT** — akhiri launcher.
 
-Banner Ghoster.ai, efek boot dengan progress bar, log timestamp, panel menu, warna cyan/pink/hijau, dan status success/error. Animasi hanya ditampilkan bila terminal mendukung ANSI. Pengguna dapat memilih `npm run setup -- --no-animation`; atau menjalankan `REDUCED_MOTION=1 npm run setup`. Output Python diteruskan secara langsung sehingga prompt verifikasi manual tetap terbaca.
+Jika folder `.venv` belum tersedia, launcher otomatis membuat environment, memasang dependensi dan Chromium Playwright. Prasyarat: Node.js 18+ dan Python 3.10+.
 
-## Perintah tambahan
+## Proxy
+
+Gunakan `host:port`, `http://host:port`, atau `socks5://host:port`. Format `http://user:password@host:port` juga didukung. Password proxy tidak dicetak di log. Proxy harus mempunyai jalur jaringan ke URL lab privat (remote proxy sering tidak bisa mencapai localhost perangkat Anda).
+
+## Tampilan Terminal
+
+Launcher memakai warna cyber cyan, magenta dan hijau, efek boot, spinner, status timestamp dan log setiap tahap. Animasi dimatikan bila output bukan TTY, `NO_COLOR` disetel, atau `REDUCED_MOTION=1`.
 
 ```bash
+npm run setup -- --no-animation
 npm run setup -- --check
-npm run setup -- --help
+npm run setup -- --preview
 npm run test:setup
 ```
 
 ## Batasan
 
-Mode otomatis hanya untuk lab lokal atau jaringan privat yang Anda kendalikan. Runner tidak mengirim permintaan reset massal ke layanan Instagram asli. Tidak ada tugas background dari launcher. Konfigurasi proxy opsional tetap mengikuti variabel `LAB_PROXY_SERVER`, `LAB_PROXY_USERNAME`, dan `LAB_PROXY_PASSWORD` milik engine Python.
+Automasi pemulihan dummy hanya boleh dijalankan sekali per pengujian pada localhost, IP privat atau host lab ber-resolusi privat. Domain publik dapat dibuka untuk **inspeksi manual saja**; script tidak menekan permintaan pemulihan pada domain publik. Domain layanan Instagram/Meta ditolak. Headless ON tidak cocok untuk tantangan verifikasi manual; pilih OFF bila pengujian menampilkan tantangan.
+
+Identifier dikirim ke proses Python melalui environment sementara agar tidak muncul sebagai argumen command-line. Hasil uji ada di `output/web_lab_result.json` dan screenshot `output/web_lab_last.png`. Jangan memasukkan kredensial asli.
