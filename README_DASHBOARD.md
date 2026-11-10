@@ -107,3 +107,62 @@ Uji fungsinya:
 ```bash
 python tests_account_checker.py
 ```
+
+
+## Live Profile Preview — Ghoster.ai
+
+Saat memilih **Web lab privat**, ketik satu username Instagram atau akun lab pada field identifier. Di sisi kanan dashboard muncul preview otomatis setelah input berhenti sekitar 1,25 detik. Preview adalah pemeriksaan read-only, terpisah dari Recovery Flow, dan tidak mengirim Forgot Password maupun login ke Instagram.
+
+### Tiga sumber profil
+
+1. **API web lab privat**: server lab Anda sendiri di localhost atau IP privat.
+2. **Instagram resmi · akun terhubung**: profil Professional (Business/Creator) yang sudah memberikan izin melalui Meta Instagram API with Instagram Login. Hanya akun pemilik token yang bisa dibaca dari pilihan ini.
+3. **Demo**: hanya akun dummy seperti demo_account, needs.verify, disabled.demo. Input username nyata, termasuk rizky_asepsutrisna, tidak menghasilkan angka statistik asli pada mode demo.
+
+### API privat yang harus disediakan web lab
+
+Method: GET
+
+Path: /api/lab/account-profile?username=demo_account
+
+Header: Authorization: Bearer <token-admin-lab>
+
+Contoh respons JSON dummy (bukan statistik akun nyata):
+
+```json
+{
+  "username": "demo_account",
+  "exists": true,
+  "full_name": "Nama Akun Lab",
+  "biography": "Akun simulasi pengujian",
+  "profile_picture_url": "https://cdn-contoh-milik-lab.invalid/avatar.png",
+  "followers_count": 1250,
+  "following_count": 135,
+  "media_count": 23,
+  "account_status": "active",
+  "session_status": "active"
+}
+```
+
+Avatar harus menggunakan URL HTTPS yang browser bisa akses. Tanpa gambar, UI menampilkan avatar cadangan. Angka yang tidak tersedia ditampilkan —, bukan 0.
+
+### Akun Instagram Business/Creator milik Anda
+
+Buat aplikasi resmi di Meta for Developers menggunakan Instagram API with Instagram Login; minta permission instagram_business_basic dan dapatkan token setelah pemilik akun memberikan persetujuan. Jangan unggah token ke GitHub atau frontend.
+
+```bash
+export IG_PROFILE_ACCESS_TOKEN="TOKEN_AKUN_PROFESSIONAL_MILIK_ANDA"
+npm run web
+```
+
+Backend menggunakan endpoint resmi GET https://graph.instagram.com/v26.0/me dengan fields username,name,biography,followers_count,follows_count,media_count,profile_picture_url. Username input wajib cocok dengan akun milik token. Akun Instagram Personal biasa tidak didukung oleh API profesional tersebut.
+
+### Pengujian
+
+```bash
+git pull origin main
+python tests_profile_preview.py
+npm run web
+```
+
+Referensi: Meta Instagram API [Postman](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api), [Instaloader](https://instaloader.github.io/module/structures.html). Instaloader adalah library tidak resmi dan tidak digunakan pada fitur ini; akses anonim terhadap profil bisa dibatasi Instagram.
