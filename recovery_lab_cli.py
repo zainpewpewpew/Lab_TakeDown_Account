@@ -240,6 +240,9 @@ def main(argv=None):
     parser.add_argument("--min-delay", type=float, default=1.0)
     parser.add_argument("--max-delay", type=float, default=3.0)
     parser.add_argument("--output", default="output/recovery_lab")
+    parser.add_argument("--demo", action="store_true", help="Gunakan simulator offline bawaan")
+    parser.add_argument("--demo-options", choices=("both", "email", "sms", "none"), default="both")
+    parser.add_argument("--demo-challenge", action="store_true", help="Simulasikan verifikasi manual")
     args = parser.parse_args(argv)
     if args.browser_mode == "multilogin" and args.headless:
         parser.error("Headless ditentukan oleh profil Multilogin, bukan oleh script ini")
@@ -254,8 +257,14 @@ def main(argv=None):
     output.mkdir(parents=True, exist_ok=True)
     result = {"status": "NOT_STARTED", "channel": None}
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    mock_server = None
     try:
-        url = args.url if args.url is not None else input("Masukkan URL website lab privat: ")
+        if args.demo:
+            from mock_recovery_lab import start_mock_server
+            mock_server, url = start_mock_server(options=args.demo_options, challenge=args.demo_challenge)
+            terminal.line("SIMULATOR", "Simulator offline lokal dimulai; tidak mengirim SMS/email", "green")
+        else:
+            url = args.url if args.url is not None else input("Masukkan URL website lab privat: ")
         url = validate_owned_lab_url(url)
         terminal.line("SCOPE", "Target lab privat tervalidasi", "green")
         identifier = args.identifier if args.identifier is not None else input(
@@ -341,6 +350,9 @@ def main(argv=None):
         path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         terminal.line("REPORT", str(path), "green")
         terminal.line("FINISH", "Satu pengujian selesai; tidak ada retry otomatis", "green")
+        if mock_server is not None:
+            mock_server.shutdown()
+            mock_server.server_close()
     return 0 if result["status"] in ("CONFIRMATION_VISIBLE", "NO_CHANNEL", "UNCONFIRMED") else 1
 
 
