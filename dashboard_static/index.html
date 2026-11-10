@@ -23,6 +23,14 @@ small.hint{display:block;color:#6f91a1;margin-top:6px;font-size:10px}.seg{displa
 .result{border:1px dashed #38516a;border-radius:10px;background:#0a1827;padding:19px;color:#8caaba;font-size:12px;min-height:130px;display:flex;align-items:center;justify-content:center;text-align:center;gap:14px;flex-direction:column}.result img{max-width:100%;max-height:300px;object-fit:contain;border:1px solid #29465a;border-radius:8px}.result a{font-size:11px}.footer{color:#5c7a8e;font-size:10px;margin-top:25px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.hide{display:none!important}
 @media (max-width:1080px){.layout{grid-template-columns:1fr}.side{display:none}.main{padding:21px}.cards{gap:10px}}
 @media (max-width:580px){.cards{grid-template-columns:1fr 1fr}.cards .metric:last-child{grid-column:1/-1}.metric{padding:13px}.metric-value{font-size:19px}.steps{grid-template-columns:repeat(2,1fr)}.top-left{display:none}}
+
+/* Account Checker extension */
+.account-check-layout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.account-check-layout .field{margin:0 0 7px}
+.account-check-result{margin-top:17px;padding:17px;border:1px solid #275248;border-radius:11px;background:#071e23;min-height:66px;color:#a9c5c4;white-space:pre-wrap;font-size:12px;line-height:1.7}
+.account-check-result strong{color:var(--green)}.account-action{margin-top:16px;padding:11px 19px;border-radius:8px;color:#062219;background:var(--green);font-weight:800;border:0}
+.account-action:disabled{opacity:.55;cursor:wait}
+@media(max-width:850px){.account-check-layout{grid-template-columns:1fr}}
 </style></head>
 <body><div class="app"><aside class="side"><div class="brand"><div class="brand-logo">⌘</div><div>GHOSTER<span style="color:var(--green)">.</span>AI<div style="font-size:9px;font-weight:500;color:#6c94a2;letter-spacing:.12em">BROWSER AUTOMATION</div></div></div><div class="side-section">WORKSPACE</div><div class="nav"><span>◈</span> Test runner</div><div class="side-section">CONNECTION</div><div style="color:#8faaba;font-size:11px;padding-left:11px">● Chromium · local<br><br>● Python worker · ready<br><br>● Private target only</div><div class="sidebar-card"><strong>▣ PRIVATE SCOPE</strong><p>Dashboard ini berjalan di Mac Anda. Uji satu alur pada website lab yang Anda miliki atau gunakan simulator offline.</p></div></aside>
 <main class="main"><div class="top"><div class="top-left">GHOSTER.AI / LAB / AUTOMATION</div><div class="top-right"><span class="pulse"></span> LOCAL ENGINE ONLINE &nbsp;·&nbsp; V1.0</div></div><h1>Ghoster<span style="color:var(--green)">.ai</span> Browser Lab<span style="color:var(--green)">.</span></h1><p class="lead">Jalankan pengujian alur pemulihan pada website lab privat, pantau setiap langkah, dan tinjau hasilnya langsung dari satu dashboard.</p>
@@ -38,6 +46,20 @@ small.hint{display:block;color:#6f91a1;margin-top:6px;font-size:10px}.seg{displa
 </div></section>
 <div class="activity"><section class="panel"><header class="panel-head"><h2>02 / Runtime Monitor</h2><span class="eyebrow">LIVE</span></header><div class="statusbar"><div class="statusicon">◈</div><div><strong id="status-title">Ready to initialize</strong><p id="status-desc">Pilih mode, lalu tekan Mulai Test</p></div><span class="state" id="status-badge">IDLE</span></div><div class="steps"><div class="step" id="step1"><b>01</b>LAUNCH</div><div class="step" id="step2"><b>02</b>NAVIGATE</div><div class="step" id="step3"><b>03</b>FLOW</div><div class="step" id="step4"><b>04</b>RESULT</div></div><div class="loghead"><span><span class="logdot">●</span> EVENT STREAM</span><span id="count">0 EVENTS</span></div><div class="logpane" id="logs"><div class="empty">&gt; Awaiting first test execution_<br><span style="font-size:10px">Logs akan muncul di sini.</span></div></div><div class="manual" id="manual"><b>⚠ HUMAN VERIFICATION REQUIRED</b>Selesaikan pemeriksaan manusia secara manual pada jendela Chromium yang terbuka. Setelah selesai, lanjutkan dari dashboard.<br><button class="btn secondary" id="resume">✓ VERIFIKASI SELESAI — LANJUT</button></div></section>
 <section class="panel"><header class="panel-head"><h2>03 / Evidence &amp; Screenshot</h2><span class="eyebrow">RESULTS</span></header><div class="content"><div class="result" id="result"><span style="font-size:26px;color:#5c8a95">▧</span>Belum ada hasil pengujian.<br>Screenshot akan muncul setelah run selesai.</div></div></section></div></div>
+
+<section class="panel" id="account-checker" style="margin-top:23px">
+<header class="panel-head"><h2>04 / Account Checker</h2><span class="eyebrow">READ-ONLY · LAB API</span></header>
+<div class="content">
+<p class="lead" style="margin:0 0 20px">Periksa satu akun dummy pada simulator atau API admin milik website lab Anda. Tidak melakukan login, reset password, atau scraping Instagram.</p>
+<div class="account-check-layout">
+<div><label class="field" for="ac-mode">Lingkungan</label><select id="ac-mode"><option value="demo">Demo lokal</option><option value="private">API web lab privat</option></select></div>
+<div><label class="field" for="ac-user">Username akun lab</label><input id="ac-user" type="text" maxlength="30" autocomplete="off" spellcheck="false" value="demo_account" placeholder="demo_account"></div>
+<div id="ac-url-wrap" class="hide"><label class="field" for="ac-url">URL origin web lab</label><input id="ac-url" type="url" placeholder="http://127.0.0.1:3000/"></div>
+</div>
+<small class="hint">Demo: demo_account, needs.verify, disabled.demo. Mode privat membaca GET /api/lab/account-status dari API admin Anda dan membutuhkan LAB_ACCOUNT_CHECK_TOKEN di environment server.</small>
+<button class="account-action" type="button" id="ac-check">◈ CHECK ACCOUNT</button>
+<div id="ac-result" class="account-check-result" role="status" aria-live="polite">SYSTEM READY // Account Checker menunggu input.</div>
+</div></section>
 <footer class="footer"><span>© LOCAL LAB · OFFLINE DEMO / PRIVATE TEST</span><span>NO REAL RESET EMAILS OR SMS IN DEMO MODE</span></footer></main></div>
 <script>
 const TOKEN=__LOCAL_LAB_TOKEN__;
@@ -59,5 +81,33 @@ const logbox=$('logs');if(eventCount){const atEnd=logbox.scrollHeight-logbox.cli
 let result=$('result');if(job&&job.has_screenshot){if(state.lastId!==job.id||!state.lastScreenshot){state.lastScreenshot='/api/screenshot?v='+encodeURIComponent(job.id);state.lastId=job.id}result.replaceChildren();let im=document.createElement('img');im.src=state.lastScreenshot;im.alt='Screenshot hasil Chromium';let a=document.createElement('a');a.href=state.lastScreenshot;a.target='_blank';a.rel='noopener';a.textContent='Buka screenshot resolusi penuh';result.append(im,a)}else if(job&&(['failed','cancelled'].includes(status))){result.textContent='Tidak ada screenshot. Periksa event stream untuk detail.'}else result.innerHTML='<span style="font-size:26px;color:#5c8a95">▧</span>Belum ada hasil pengujian.<br>Screenshot akan muncul setelah run selesai.';
 }
 async function refresh(){try{const data=await api('GET','/api/state');render(data)}catch(err){$('status-title').textContent='Dashboard connection lost';$('status-desc').textContent=err.message}}
+
+function accountModeUpdate(){
+  $('ac-url-wrap').classList.toggle('hide',$('ac-mode').value!=='private');
+}
+$('ac-mode').addEventListener('change',accountModeUpdate);
+$('ac-check').addEventListener('click',async()=>{
+  const button=$('ac-check'), result=$('ac-result');
+  const payload={mode:$('ac-mode').value,username:$('ac-user').value.trim(),url:$('ac-url').value.trim()};
+  button.disabled=true;
+  result.textContent='◆ CHECKING // Membaca status akun dari lingkungan lab...';
+  try{
+    const data=await api('POST','/api/account-check',payload);
+    const description=[
+      'GHOSTER.AI // ACCOUNT INSPECTION',
+      'Username       : '+data.username,
+      'Account found  : '+(data.exists?'YES':'NO'),
+      'Account status : '+data.account_status.toUpperCase(),
+      'Session status : '+data.session_status.toUpperCase(),
+      'Source         : '+data.source,
+      'Checked at     : '+data.checked_at
+    ].join('\n');
+    result.textContent=description;
+  }catch(err){
+    result.textContent='◆ CHECK FAILED // '+err.message;
+  }finally{button.disabled=false}
+});
+accountModeUpdate();
+
 modeUpdate();refresh();setInterval(refresh,1000);
 </script></body></html>
