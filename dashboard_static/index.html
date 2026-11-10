@@ -59,8 +59,8 @@ small.hint{display:block;color:#6f91a1;margin-top:6px;font-size:10px}.seg{displa
 <div class="eyebrow">PILIH LINGKUNGAN</div><div class="seg" style="margin-top:10px"><input type="radio" name="mode" value="demo" id="demo" checked><label for="demo">◉ Demo lokal</label><input type="radio" name="mode" value="private" id="private"><label for="private">⌘ Web lab privat</label></div>
 <div id="private-fields" class="hide">
 <label class="field" for="url">URL website lab</label><input type="url" id="url" placeholder="http://127.0.0.1:3000/"><small class="hint">Hanya localhost / IP privat / domain lab internal</small>
-<div class="profile-source-row"><select id="profile-source" aria-label="Sumber metadata profil"><option value="private">API web lab privat</option><option value="instagram_own">Instagram resmi · akun terhubung</option><option value="demo">Demo tanpa koneksi Instagram</option></select><button type="button" id="profile-refresh">↻ PREVIEW</button></div>
-<small class="hint">Preview otomatis setelah berhenti mengetik. API Instagram resmi hanya membaca akun Business/Creator milik token yang terhubung. Demo tidak menampilkan statistik akun asli.</small>
+<div class="profile-source-row"><select id="profile-source" aria-label="Sumber metadata profil"><option value="instaloader">Instagram publik · Instaloader (tanpa token)</option><option value="private">API web lab privat</option><option value="instagram_own">Instagram resmi · akun terhubung</option><option value="demo">Demo tanpa koneksi Instagram</option></select><button type="button" id="profile-refresh">↻ PREVIEW</button></div>
+<small class="hint">Preview otomatis setelah berhenti mengetik. Instaloader membaca metadata profil publik tanpa token Meta; bisa dibatasi oleh Instagram. Cache 5 menit, jeda antar username berbeda minimal 15 detik. Posts bisa tidak tersedia (—). Tidak ada login atau reset akun.</small>
 </div>
 <label class="field" for="identifier">Username Instagram / email / nomor HP untuk lab</label><input type="text" id="identifier" value="demo@lab.test" autocomplete="off" maxlength="128"><small class="hint">Untuk preview, isi username tanpa @. Untuk Recovery Flow, gunakan identitas lab yang Anda kendalikan.</small>
 <div id="demo-fields"><label class="field" for="demo-options">Opsi pemulihan yang tersedia</label><select id="demo-options"><option value="both">Email + SMS (prioritas email)</option><option value="email">Email saja</option><option value="sms">SMS saja</option><option value="none">Tidak ada opsi</option></select><label class="checkbox"><input type="checkbox" id="challenge">Munculkan verifikasi manusia (demo)</label></div>
@@ -111,7 +111,7 @@ async function api(method,path,obj){const cfg={method,headers:{'Accept':'applica
 function modeUpdate(){const isPrivate=$('private').checked;$('private-fields').classList.toggle('hide',!isPrivate);$('demo-fields').classList.toggle('hide',isPrivate);if(!isPrivate&&$('challenge').checked)$('headless').checked=false;
 if(isPrivate&&$('identifier').value==='demo@lab.test')$('identifier').value='';
 if(!isPrivate&&!$('identifier').value)$('identifier').value='demo@lab.test';
-$('identifier').placeholder=isPrivate?'Contoh: rizky_asepsutrisna':'demo@lab.test';}
+$('identifier').placeholder=isPrivate?'Contoh: rizkyasep_sutrisna':'demo@lab.test';}
 document.querySelectorAll('input[name=mode]').forEach(x=>x.addEventListener('change',modeUpdate));$('delay').addEventListener('input',()=>{$('delay-readout').textContent=Number($('delay').value).toFixed(1)+' s'});$('challenge').addEventListener('change',()=>{if($('challenge').checked)$('headless').checked=false});$('headless').addEventListener('change',()=>{if($('headless').checked)$('challenge').checked=false});
 $('start').addEventListener('click',async()=>{const payload={mode:$('private').checked?'private':'demo',url:$('url').value.trim(),identifier:$('identifier').value.trim(),delay:Number($('delay').value),headless:$('headless').checked,demo_options:$('demo-options').value,demo_challenge:$('challenge').checked};try{await api('POST','/api/start',payload);await refresh()}catch(e){window.alert(e.message)}});
 $('stop').addEventListener('click',async()=>{try{await api('POST','/api/stop',{});await refresh()}catch(e){window.alert(e.message)}});
@@ -203,7 +203,8 @@ async function profileLoad(){
     $('profile-followers').textContent=profileNumber(data.followers_count);
     $('profile-following').textContent=profileNumber(data.following_count);
     $('profile-bio').textContent=data.biography||'Bio tidak tersedia dari sumber ini.';
-    $('profile-origin').textContent='Sumber: '+data.source;
+    const labels={instaloader_public:'Instaloader · profil publik',private_lab_api:'API Lab privat',meta_official_own_account:'Meta · akun terhubung',offline_demo:'Simulasi lokal'};
+    $('profile-origin').textContent='Sumber: '+(labels[data.source]||data.source);
     $('profile-time').textContent=(data.checked_at||'').replace('T',' ').slice(0,19)+' UTC';
     $('profile-initials').textContent=(data.username[0]||'?').toUpperCase();
     profileImage(data.profile_picture_url);
