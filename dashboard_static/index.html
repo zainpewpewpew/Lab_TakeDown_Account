@@ -166,16 +166,35 @@ function profileReset(message='Masukkan username untuk melihat metadata profil.'
   $('profile-photo').classList.add('hide');$('profile-photo').removeAttribute('src');
   $('profile-initials').classList.remove('hide');$('profile-initials').textContent='◎';
 }
-function profileImage(url){
+function profileImage(url, source, username){
   const photo=$('profile-photo'), fallback=$('profile-initials');
-  photo.classList.add('hide');photo.removeAttribute('src');fallback.classList.remove('hide');
+  const loadingGeneration=profileUI.generation;
+  photo.onload=null;photo.onerror=null;
+  photo.classList.add('hide');photo.removeAttribute('src');
+  fallback.classList.remove('hide');
   if(!url)return;
   try{
     const parsed=new URL(url);
     if(parsed.protocol!=='https:')return;
-    photo.onload=()=>{photo.classList.remove('hide');fallback.classList.add('hide')};
-    photo.onerror=()=>{photo.classList.add('hide');fallback.classList.remove('hide')};
-    photo.src=url;
+    const isPublic=source==='instaloader_public';
+    let triedDirect=false;
+    photo.onload=()=>{
+      if(loadingGeneration!==profileUI.generation)return;
+      photo.classList.remove('hide');
+      fallback.classList.add('hide');
+    };
+    photo.onerror=()=>{
+      if(loadingGeneration!==profileUI.generation)return;
+      if(isPublic&&!triedDirect){
+        triedDirect=true;
+        photo.src=url; // CDN fallback if the local proxy cannot reach Instagram.
+      }else{
+        photo.classList.add('hide');
+        fallback.classList.remove('hide');
+        fallback.title='Foto profil tidak dapat dimuat dari Instagram CDN saat ini';
+      }
+    };
+    photo.src=isPublic?'/api/profile-avatar?username='+encodeURIComponent(username):url;
   }catch{}
 }
 async function profileLoad(){
@@ -207,7 +226,7 @@ async function profileLoad(){
     $('profile-origin').textContent='Sumber: '+(labels[data.source]||data.source);
     $('profile-time').textContent=(data.checked_at||'').replace('T',' ').slice(0,19)+' UTC';
     $('profile-initials').textContent=(data.username[0]||'?').toUpperCase();
-    profileImage(data.profile_picture_url);
+    profileImage(data.profile_picture_url,data.source,data.username);
   }catch(err){
     if(generation!==profileUI.generation)return;
     profileReset('Preview tidak tersedia: '+err.message);
