@@ -1,4 +1,4 @@
-# Lab Console — Website Dashboard
+# Ghoster.ai — Web Dashboard
 
 Website lokal untuk menjalankan pengujian **satu alur** recovery pada situs lab yang Anda miliki, dengan **Python + Playwright**. Dashboard sendiri berjalan di Mac Anda pada `http://127.0.0.1:8787` dan tidak memakai layanan cloud. Program ini bukan alat untuk mengirim reset password ke Instagram atau pihak ketiga.
 
