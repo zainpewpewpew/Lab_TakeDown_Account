@@ -182,12 +182,13 @@ async function profileLoad(){
   if(!$('private').checked)return;
   const username=$('identifier').value.trim().replace(/^@/,'');
   if(!/^[A-Za-z0-9._]{1,30}$/.test(username)){
+    profileUI.generation++;
     profileReset('Masukkan username akun Instagram/lab tanpa @ untuk menampilkan preview (bukan email/nomor HP).');
     return;
   }
   const mode=$('profile-source').value;
   const url=$('url').value.trim();
-  if(mode==='private'&&!url){profileReset('Isi URL origin web lab privat untuk menampilkan data dari API admin Anda.');return;}
+  if(mode==='private'&&!url){profileUI.generation++;profileReset('Isi URL origin web lab privat untuk menampilkan data dari API admin Anda.');return;}
   const generation=++profileUI.generation;
   $('profile-state').textContent='SYNCING METADATA...';
   $('profile-handle').textContent='@'+username;
@@ -231,6 +232,7 @@ function profileVisibility(){
   const show=$('private').checked;
   $('profile-preview').classList.toggle('hide',!show);
   if(show)scheduleProfile();
+  else {profileUI.generation++;if(profileUI.timer)clearTimeout(profileUI.timer);}
 }
 document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',profileVisibility));
 profileVisibility();
