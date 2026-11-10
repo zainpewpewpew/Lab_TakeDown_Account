@@ -6,6 +6,7 @@ import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import process from 'node:process';
+import { normalizedTarget, normalizedProxy, configLabel } from './setup-config.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VENV = path.join(ROOT, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
@@ -16,6 +17,7 @@ const colors = { cyan:'\x1b[38;2;52;229;247m', pink:'\x1b[38;2;255;92;207m', gre
 const paint = (s, c) => colorEnabled ? (colors[c] || '') + s + '\x1b[0m' : s;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const time = () => new Date().toLocaleTimeString('en-GB', {hour12: false});
+const config = {headless:false, proxy:false};
 let count = 0;
 function log(stage, message, tone='cyan') {
   console.log(paint(time(), 'dim') + ' ' + paint('[' + String(++count).padStart(2, '0') + ']', 'dim') + ' ' + paint(('◆ ' + stage).padEnd(17), tone) + ' ' + message);
@@ -25,10 +27,22 @@ function banner() {
     ' ╔═══════════════════════════════════════════════════════════════════╗',
     ' ║                                                                   ║',
     ' ║                   G H O S T E R . A I                             ║',
-    ' ║             C Y B E R  ·  L A B  ·  C O N S O L E                ║',
+    ' ║             C Y B E R  /  T E R M I N A L                ║',
     ' ║                                                                   ║',
     ' ╚═══════════════════════════════════════════════════════════════════╝',
   ];
+}
+function panel(title) {
+  console.log('\n' + paint('╭──[ GHOSTER.AI // ' + title + ' ]' + '─'.repeat(Math.max(0, 30 - title.length)), 'blue'));
+}
+async function pulse(label) {
+  if (!motionEnabled) return;
+  const frames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧'];
+  for (const frame of frames) {
+    process.stdout.write('\r ' + paint(frame + ' ' + label, 'cyan'));
+    await pause(48);
+  }
+  process.stdout.write('\r' + ' '.repeat(label.length+8) + '\r');
 }
 async function boot() {
   for (const line of banner()) {
@@ -63,10 +77,12 @@ function health() {
     log('CHECK', name + ': ' + (hasFile(name) ? 'READY' : 'MISSING'), hasFile(name) ? 'green':'yellow');
   console.log(paint('╰' + '─'.repeat(63), 'blue'));
 }
-async function launch(bin, args, description) {
+async function launch(bin, args, description, extraEnv={}) {
   log('START', description, 'pink');
   const result = await new Promise(resolve => {
-    const child = spawn(bin, args, {cwd:ROOT, stdio:'inherit', env:{...process.env, PYTHONUNBUFFERED:'1'}});
+    const env = {...process.env, PYTHONUNBUFFERED:'1', ...extraEnv};
+    if (!config.proxy) for (const key of ['LAB_PROXY_SERVER','LAB_PROXY_USERNAME','LAB_PROXY_PASSWORD']) delete env[key];
+    const child = spawn(bin, args, {cwd:ROOT, stdio:'inherit', env});
     let done = false;
     const finish = code => { if (!done) {done=true; resolve(code);} };
     child.once('error', error => {log('ERROR', error.message, 'red'); finish(1);});
@@ -86,59 +102,105 @@ async function initialize() {
   if (!await launch(VENV, ['-m','pip','install','-r','requirements.txt'], 'Memasang dependensi lab')) return;
   await launch(VENV, ['-m','playwright','install','chromium'], 'Memasang Chromium Playwright');
 }
-async function runner(script, args=[]) {
-  if (!hasFile(script)) {log('MISSING', script + ' tidak ada di root repo', 'red'); return;}
-  if (!existsSync(VENV)) {log('SETUP', 'Pilih [1] INITIALIZE terlebih dahulu', 'yellow'); return;}
-  log('SCOPE', 'Satu pengujian / tanpa request otomatis ke Instagram', 'green');
-  await launch(VENV, [script, ...args], 'Menjalankan ' + script);
+
+async function ensureEnvironment() {
+  if (existsSync(VENV)) return true;
+  log('ENV', 'Persiapan otomatis Python dan Chromium', 'yellow');
+  const available = python();
+  if (!available) {log('BLOCKED', 'Python 3.10+ belum terpasang', 'red'); return false;}
+  if (!await launch(available.bin, [...available.prefix, '-m', 'venv', '.venv'], 'Membuat .venv')) return false;
+  if (!await launch(VENV, ['-m','pip','install','-r','requirements.txt'], 'Memasang Playwright')) return false;
+  return await launch(VENV, ['-m','playwright','install','chromium'], 'Memasang Chromium Playwright');
 }
-async function diagnostics() {
-  health();
-  if (!existsSync(VENV)) {log('SETUP', 'Buat .venv untuk menjalankan tes Python', 'yellow'); return;}
-  for (const script of ['tests.py', 'tests_web_lab_flow.py', 'tests_dashboard.py'])
-    if (hasFile(script)) await runner(script);
+async function ask(prompt) {
+  const rl=createInterface({input:process.stdin,output:process.stdout});
+  try{return (await rl.question(paint(prompt,'pink'))).trim();}
+  finally{rl.close();}
 }
 function menu() {
-  console.log('\n' + paint('╭──[ GHOSTER.AI // MAIN CONTROL ]' + '─'.repeat(27), 'blue'));
-  const entries = [
-    ['1','INITIALIZE','Persiapkan Python, dependensi, Chromium'],
-    ['2','SESSION LAB','Simulasi keamanan sesi offline'],
-    ['3','PRIVATE FLOW','Alur UI single-run pada web lab privat'],
-    ['4','WEB DASHBOARD','Jalankan dashboard lokal'],
-    ['5','DIAGNOSTICS','Health check dan unit tests'],
-    ['0','SHUTDOWN','Tutup launcher'],
+  panel('MAIN CONTROL');
+  const entries=[
+    ['1','URL TARGET','Buka URL web lab pribadi'],
+    ['2','CONFIG',configLabel(config)],
+    ['0','EXIT','Tutup Ghoster.ai'],
   ];
-  for (const [id,title,desc] of entries)
-    console.log('  ' + paint('['+id+']', 'cyan') + ' ' + paint(title.padEnd(17), 'green') + paint(desc, 'dim'));
-  console.log(paint('╰' + '─'.repeat(63), 'blue'));
+  for(const [key,name,description] of entries)
+    console.log('  '+paint('['+key+']','cyan')+' '+paint(name.padEnd(17),'green')+paint(description,'dim'));
+  console.log(paint('╰'+'─'.repeat(63),'blue'));
+}
+function configMenu() {
+  panel('CONFIG');
+  for(const [key,name,enabled] of [['1','HEADLESS',config.headless],['2','PROXY',config.proxy]]) {
+    console.log('  '+paint('['+key+']','cyan')+' '+paint(name.padEnd(17),'green')+paint(enabled?'ON':'OFF', enabled?'green':'yellow'));
+  }
+  console.log('  '+paint('[0]','cyan')+' '+paint('BACK'.padEnd(17),'dim')+'Kembali ke main menu');
+  console.log(paint('╰'+'─'.repeat(63),'blue'));
+}
+async function runTarget() {
+  const raw=await ask('  └─[ GHOSTER.AI / URL TARGET ] › ');
+  let url;
+  try{url=normalizedTarget(raw);}
+  catch(e){log('INVALID URL',e.message,'red');return;}
+  log('TARGET',url);
+  const identifier=await ask('  └─[ GHOSTER.AI / USERNAME-EMAIL-PHONE ] › ');
+  if(!identifier || identifier.length>128 || /[\r\n]/.test(identifier)){
+    log('INVALID','Identifier dummy wajib diisi (maksimal 128 karakter)','red');return;
+  }
+  let proxy=null;
+  if(config.proxy) {
+    const entered=await ask('  └─[ GHOSTER.AI / PROXY URL ] › ');
+    try{proxy=normalizedProxy(entered);}
+    catch(e){log('INVALID PROXY',e.message,'red');return;}
+    log('PROXY','ON · '+proxy.label,'green');
+  } else log('PROXY','OFF · koneksi normal','dim');
+  log('HEADLESS',config.headless?'ON':'OFF',config.headless?'yellow':'green');
+  log('SCOPE','Lab privat: automation satu kali · domain publik: inspect only','yellow');
+  await pulse('VERIFYING ENVIRONMENT');
+  if(!hasFile('web_lab_flow.py') || !hasFile('requirements.txt')){
+    log('MISSING','File Python lab tidak ditemukan','red');return;
+  }
+  if(!await ensureEnvironment()) return;
+  const opts=['web_lab_flow.py','--url',url,'--output','output'];
+  if(config.headless) opts.push('--headless');
+  const env={LAB_TEST_IDENTIFIER:identifier};
+  if(proxy) {
+    env.LAB_PROXY_SERVER=proxy.server;
+    env.LAB_PROXY_USERNAME=proxy.username;
+    env.LAB_PROXY_PASSWORD=proxy.password;
+  }
+  await launch(VENV,opts,'Menjalankan PRIVATE LAB FLOW',env);
 }
 async function interactive() {
   await boot();
-  health();
-  while (true) {
+  log('NODE',process.version+' · '+process.platform,'green');
+  while(true) {
     menu();
-    const rl = createInterface({input:process.stdin, output:process.stdout});
-    let choice = '';
-    try { choice = (await rl.question(paint('  └─[ GHOSTER.AI / SELECT ] › ', 'pink'))).trim().toLowerCase(); }
-    catch {choice = '0';}
-    finally {rl.close();}
-    if (choice === '0' || choice === 'exit' || choice === 'q') {log('SHUTDOWN', 'Ghoster.ai ditutup', 'green'); return;}
-    if (choice === '1') await initialize();
-    else if (choice === '2') await runner('lab.py');
-    else if (choice === '3') await runner('web_lab_flow.py');
-    else if (choice === '4') await runner('dashboard.py');
-    else if (choice === '5') await diagnostics();
-    else log('INVALID', 'Pilih salah satu menu 0–5', 'yellow');
+    const choice=await ask('  └─[ GHOSTER.AI / SELECT ] › ');
+    if(['0','exit','q'].includes(choice.toLowerCase())) {
+      log('SHUTDOWN','Ghoster.ai ditutup','green');return;
+    }
+    if(choice==='1') await runTarget();
+    else if(choice==='2') {
+      while(true) {
+        configMenu();
+        const selected=await ask('  └─[ GHOSTER.AI / CONFIG ] › ');
+        if(selected==='0') break;
+        if(selected==='1') {config.headless=!config.headless;log('HEADLESS',config.headless?'ON':'OFF','green');}
+        else if(selected==='2') {config.proxy=!config.proxy;log('PROXY',config.proxy?'ON':'OFF','green');}
+        else log('INVALID','Pilih 1, 2, atau 0','yellow');
+      }
+    } else log('INVALID','Pilih 1, 2, atau 0','yellow');
   }
 }
 function help() {
-  console.log('Ghoster.ai — Cyber Lab Terminal\n\n  npm run setup                  Jalankan menu interaktif\n  npm run setup -- --check       Diagnosis tanpa menu\n  npm run setup -- --help        Tampilkan bantuan\n  npm run setup -- --no-animation  Nonaktifkan animasi\n  npm run test:setup             Jalankan unit test\n\nNode.js 18+ dan Python 3.10+ diperlukan. Hanya untuk pengujian lab privat.');
+  console.log('Ghoster.ai — Cyber Terminal\n\n  npm run setup                    Main menu 1 URL TARGET / 2 CONFIG / 0 EXIT\n  npm run setup -- --check         Health check\n  npm run setup -- --preview       Lihat menu tanpa interaksi\n  npm run setup -- --no-animation  Kurangi animasi\n  npm run test:setup               Jalankan tes\n\nURL domain otomatis diberi https://. Pengujian otomatis hanya di lab privat.');
 }
 async function main() {
-  if (flags.has('--help') || flags.has('-h')) return help();
-  if (flags.has('--check')) return health();
-  if (!process.stdin.isTTY) return help();
-  try {await interactive();}
-  catch (err) {log('FATAL', err?.message || String(err), 'red'); process.exitCode = 1;}
+  if(flags.has('--help')||flags.has('-h')) return help();
+  if(flags.has('--check')) return health();
+  if(flags.has('--preview')) {await boot();menu();configMenu();return;}
+  if(!process.stdin.isTTY) return help();
+  try{await interactive();}
+  catch(err){log('FATAL',err?.message||String(err),'red');process.exitCode=1;}
 }
 await main();
