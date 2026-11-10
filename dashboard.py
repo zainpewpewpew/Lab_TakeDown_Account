@@ -20,7 +20,7 @@ import webbrowser
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 
 from mock_recovery_lab import start_mock_server
 from account_checker import AccountChecker
@@ -290,6 +290,15 @@ class DashboardHTTP(ThreadingHTTPServer):
                 return self.send_body(200, page, "text/html; charset=utf-8")
             if path == "/api/state":
                 return self.send_body(200, self.server.engine.snapshot())
+            if path == "/api/profile-avatar":
+                username = parse_qs(urlsplit(self.path).query).get("username", [""])[0]
+                try:
+                    photo = self.server.profile_preview.avatar(username)
+                except ValueError:
+                    return self.send_body(404, {"error": "profile_photo_unavailable"})
+                if photo is None:
+                    return self.send_body(404, {"error": "profile_photo_unavailable"})
+                return self.send_body(200, photo[0], photo[1])
             if path == "/api/screenshot":
                 raw = self.server.engine.screenshot()
                 if raw is None:
