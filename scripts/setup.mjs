@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import process from 'node:process';
-import { normalizedTarget, normalizedProxy, configLabel } from './setup-config.mjs';
+import { normalizedTarget, normalizedProxy, configLabel, resolveLabTargetFromUsername, labBaseUrl } from './setup-config.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VENV = path.join(ROOT, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
@@ -120,7 +120,7 @@ async function ask(prompt) {
 function menu() {
   panel('MAIN CONTROL');
   const entries=[
-    ['1','URL TARGET','Buka URL web lab pribadi'],
+    ['1','USERNAME LAB','Masukkan username lab (base: '+labBaseUrl()+')'],
     ['2','CONFIG',configLabel(config)],
     ['0','EXIT','Tutup Ghoster.ai'],
   ];
@@ -137,14 +137,15 @@ function configMenu() {
   console.log(paint('╰'+'─'.repeat(63),'blue'));
 }
 async function runTarget() {
-  const raw=await ask('  └─[ GHOSTER.AI / URL TARGET ] › ');
+  const raw=await ask('  └─[ GHOSTER.AI / USERNAME LAB ] › ');
   let url;
-  try{url=normalizedTarget(raw);}
-  catch(e){log('INVALID URL',e.message,'red');return;}
+  try{url=await resolveLabTargetFromUsername(raw);}
+  catch(e){log('INVALID USERNAME',e.message,'red');return;}
   log('TARGET',url);
-  const identifier=await ask('  └─[ GHOSTER.AI / USERNAME-EMAIL-PHONE ] › ');
+  // Username lab dipakai juga sebagai identifier dummy untuk flow.
+  const identifier=raw.includes('@')?raw.split('@',1)[0]:raw;
   if(!identifier || identifier.length>128 || /[\r\n]/.test(identifier)){
-    log('INVALID','Identifier dummy wajib diisi (maksimal 128 karakter)','red');return;
+    log('INVALID','Username dummy tidak valid','red');return;
   }
   let proxy=null;
   if(config.proxy) {
@@ -193,7 +194,7 @@ async function interactive() {
   }
 }
 function help() {
-  console.log('Ghoster.ai — Cyber Terminal\n\n  npm run setup                    Main menu 1 URL TARGET / 2 CONFIG / 0 EXIT\n  npm run setup -- --check         Health check\n  npm run setup -- --preview       Lihat menu tanpa interaksi\n  npm run setup -- --no-animation  Kurangi animasi\n  npm run test:setup               Jalankan tes\n\nURL domain otomatis diberi https://. Pengujian otomatis hanya di lab privat.');
+  console.log('Ghoster.ai — Cyber Terminal\n\n  npm run setup                    Main menu 1 USERNAME LAB / 2 CONFIG / 0 EXIT\n  npm run setup -- --check         Health check\n  npm run setup -- --preview       Lihat menu tanpa interaksi\n  npm run setup -- --no-animation  Kurangi animasi\n  npm run test:setup               Jalankan tes launcher\n  npm run test:target              Jalankan tes resolver username\n\nUsername saja → http://127.0.0.1:3000/u/<username>. Override base: env LAB_BASE_URL. Pengujian otomatis hanya di lab privat; domain Meta/Instagram tetap ditolak.');
 }
 async function main() {
   if(flags.has('--help')||flags.has('-h')) return help();

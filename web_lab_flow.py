@@ -14,7 +14,25 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
-DENY = ("instagram.com", "facebook.com", "meta.com", "threads.net")
+DENY = ("instagram.com", "cdninstagram.com", "facebook.com", "fbcdn.net", "meta.com", "threads.net", "messenger.com", "whatsapp.com")
+USERNAME_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._]{0,28}[A-Za-z0-9])?$")
+DEFAULT_LAB_BASE_URL = os.environ.get("LAB_BASE_URL", "http://127.0.0.1:3000")
+
+
+def resolve_target_from_username(username, lab_base_url=None):
+    name = (username or "").strip()
+    if not name:
+        raise ValueError("Username lab kosong")
+    if "://" in name:
+        raise ValueError("Kolom username tidak menerima URL")
+    if not USERNAME_RE.fullmatch(name):
+        raise ValueError("Username lab hanya huruf/angka/._ (1–30)")
+    base = (lab_base_url or DEFAULT_LAB_BASE_URL).rstrip("/")
+    parsed = urlsplit(base)
+    host = (parsed.hostname or "").lower().rstrip(".")
+    if any(host == d or host.endswith("." + d) for d in DENY):
+        raise ValueError("LAB_BASE_URL menunjuk ke domain terlarang")
+    return f"{base}/u/{name}"
 GREEN = "\033[92m"
 CYAN = "\033[96m"
 AMBER = "\033[93m"
@@ -201,6 +219,8 @@ def execute(page, url, identifier, pace, log, manual_allowed=True):
 def main():
     p = argparse.ArgumentParser(description="Recovery Flow / PRIVATE LAB ONLY")
     p.add_argument("--url", help="Alamat website lab (default: input terminal)")
+    p.add_argument("--username", help="Username lab; otomatis dipetakan ke LAB_BASE_URL/u/<username>")
+    p.add_argument("--lab-base-url", default=DEFAULT_LAB_BASE_URL, help="Base URL lab privat (default: %(default)s)")
     p.add_argument("--identifier", help="Identifier dummy untuk lab (default: input terminal)")
     p.add_argument("--delay", type=float, default=0.7)
     p.add_argument("--headless", action="store_true", help="Tidak cocok untuk verifikasi manual")
@@ -209,6 +229,13 @@ def main():
     args = p.parse_args()
     if not 0.2 <= args.delay <= 3.0:
         p.error("--delay harus 0.2–3.0 detik")
+    if args.username and not args.url:
+        try:
+            args.url = resolve_target_from_username(args.username, args.lab_base_url)
+        except ValueError as err:
+            p.error(str(err))
+        if not args.identifier:
+            args.identifier = args.username
 
     print("""
 ╔════════════════════════════════════════════════════════╗
@@ -219,7 +246,17 @@ def main():
     result = {"status": "NOT_STARTED", "channel": None}
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    url = (args.url if args.url is not None else input("URL website lab pribadi: ")).strip()
+    if args.url is not None:
+        url = args.url.strip()
+    else:
+        raw = input("Username lab (atau URL privat): ").strip()
+        try:
+            url = resolve_target_from_username(raw, args.lab_base_url)
+            if not args.identifier:
+                args.identifier = raw
+        except ValueError:
+            # Bukan username valid — perlakukan sebagai URL dan biarkan private_url() memvalidasi.
+            url = raw
     try:
         authorized_scope = private_url(url)
         if not authorized_scope:

@@ -37,7 +37,7 @@ test('configuration labels show both toggles',()=>{
 });
 test('main menu preview lists exactly requested choices',()=>{
   const r=exec('--preview');assert.equal(r.status,0,r.stderr);
-  assert.match(r.stdout,/URL TARGET/);
+  assert.match(r.stdout,/USERNAME LAB/);
   assert.match(r.stdout,/CONFIG/);
   assert.match(r.stdout,/EXIT/);
   assert.doesNotMatch(r.stdout,/SESSION LAB|WEB DASHBOARD|DIAGNOSTICS/);
